@@ -2,6 +2,8 @@
 # -*- coding:utf-8 -*-
 
 import json, urllib2, oauth2 as oauth
+import sys
+from DictionaryServices import *
 
 KEYS = {
         'consumer_key':'wplEx0bg9v2Gk3fz0MZDH2s37',
@@ -19,12 +21,60 @@ request = oauth.Request.from_consumer_and_token(consumer, token, http_url=url)
 request.sign_request(oauth.SignatureMethod_HMAC_SHA1(), consumer, token)
 res = urllib2.urlopen(request.to_url())
 
-for r in res:
-    data = json.loads(r)
+def search_dictionary(word):
+    result = DCSCopyTextDefinition(None, word, (0, len(word)))
+    if result is None:
+        return 0
+    else:
+        return 1
 
-    try:
-        if data['user']['lang'] == 'en':
-            print data['text']
-            # insert texts to mongoDB
-    except:
-        pass
+def is_english(text):
+    words = text.split()
+    text_len = len(words)
+    count = 0
+    for word in words:
+        if search_dictionary(word) == 1:
+            count += 1
+    rate = float(count) / float(text_len)
+    if rate > 0.6:
+        return 1
+    else:
+        return 0
+
+def get_at_mentions(text):
+    words = text.split()
+    for word in words:
+        if word.startswith("@"):
+            return word
+
+def get_URLs(text):
+    words = text.split()
+    for word in words:
+        if word.startswith("http"):
+            return word
+
+def get_plane_text(text):
+    at_mention = get_at_mentions(text)
+    URL = get_URLs(text)
+
+    text = text.replace(at_mention, "")
+    text = text.replace(URL, "")
+    text = text.replace("RT", "")
+
+    return text
+
+def get_stream():
+    for r in res:
+        data = json.loads(r)
+        try:
+            if data['user']['lang'] == 'en':
+                text =  data['text']
+                if is_english(text) == 1:
+                    text = get_plane_text(text)
+                    # insert texts to mongoDB
+        except:
+            pass
+
+
+if __name__ == "__main__":
+    get_stream()
