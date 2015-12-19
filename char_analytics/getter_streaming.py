@@ -4,6 +4,7 @@
 import json, urllib2, oauth2 as oauth
 import sys
 from DictionaryServices import *
+from pymongo import MongoClient
 
 KEYS = {
         'consumer_key':'wplEx0bg9v2Gk3fz0MZDH2s37',
@@ -72,6 +73,9 @@ def get_stream():
                 if is_english(text) == 1:
                     text = get_plane_text(text)
                     # insert texts to mongoDB
+                    mongo_client = MongoClient('localhost:27017')
+                    db_connect = mongo_client["eng_tweets"]
+                    db_connect["eng_tweets"].insert_one({'text':text})
         except:
             pass
 
