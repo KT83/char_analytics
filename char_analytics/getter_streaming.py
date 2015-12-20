@@ -72,6 +72,7 @@ def get_stream():
                 text =  data['text']
                 if is_english(text) == 1:
                     text = get_plane_text(text)
+                    print(text)
                     # insert texts to mongoDB
                     mongo_client = MongoClient('localhost:27017')
                     db_connect = mongo_client["eng_tweets"]
